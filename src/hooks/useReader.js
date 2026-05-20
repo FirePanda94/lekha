@@ -30,5 +30,7 @@ export function useReader() {
     decreaseFontSize,
     fontFamily,
     setFontFamily,
+    focusMode: true,
+    flowMode: true,
   };
 }

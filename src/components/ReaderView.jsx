@@ -160,7 +160,7 @@ function ReaderView({
               onClick={onNextChapter}
               style={{
                 background: "var(--accent)",
-                color: "#fff",
+                color: "var(--highlight-text)",
                 borderRadius: "8px",
                 padding: "10px 20px",
                 fontSize: "14px",
@@ -221,11 +221,14 @@ function ReaderView({
   );
 }
 
-function ReadingTimeEstimate({ wordIndex, totalWords }) {
+function ReadingTimeEstimate({ wordIndex, totalWords, actualWpm }) {
   const settings = JSON.parse(localStorage.getItem("lekha-settings") || "{}");
-  const wpm = settings.wpm || 250;
+  const baseWpm = settings.wpm || 250;
+  // Use a blend of actual and base to keep the estimate stable
+  const effectiveWpm = actualWpm > 0 ? (actualWpm * 0.7 + baseWpm * 0.3) : baseWpm;
+  
   const wordsLeft = Math.max(0, totalWords - wordIndex);
-  const minsLeft = wordsLeft / wpm;
+  const minsLeft = wordsLeft / effectiveWpm;
 
   let label;
   if (minsLeft < 1) label = "< 1 min left";

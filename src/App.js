@@ -18,15 +18,17 @@ function App() {
     ? book.bookData.chapters[book.chapterIndex]
     : null;
 
-  const { tokenisedHtml, wordIndex, totalWords, reset, seek } = useSpeedReader(
-    currentChapter,
-    reader.wpm,
-    isPlaying,
-    () => {
-      setIsPlaying(false);
-      setChapterFinished(true);
-    },
-  );
+  const { tokenisedHtml, wordIndex, totalWords, actualWpm, reset, seek } =
+    useSpeedReader(
+      currentChapter,
+      reader.wpm,
+      isPlaying,
+      () => {
+        setIsPlaying(false);
+        setChapterFinished(true);
+      },
+      reader.flowMode,
+    );
 
   useEffect(() => {
     if (!tokenisedHtml || !book.restoredProgress) return;
@@ -81,8 +83,7 @@ function App() {
       if (e.code === "ArrowLeft" && book.chapterIndex > 0) {
         book.setChapterIndex((i) => i - 1);
       }
-      if (
-        e.code === "ArrowRight" &&
+      if (e.code === "ArrowRight" &&
         book.chapterIndex < book.bookData.chapters.length - 1
       ) {
         book.setChapterIndex((i) => i + 1);
@@ -145,6 +146,7 @@ function App() {
         }}
         wpm={reader.wpm}
         setWpm={reader.setWpm}
+        actualWpm={actualWpm}
         chapterIndex={book.chapterIndex}
         setChapterIndex={book.setChapterIndex}
         totalChapters={book.bookData?.chapters.length || 0}
@@ -165,24 +167,29 @@ function App() {
       )}
 
       {!book.bookFile && !book.loading && (
-        <LibraryView onBookSelect={book.handleBookSelect} />
+        <div className="view-fade-in">
+          <LibraryView onBookSelect={book.handleBookSelect} />
+        </div>
       )}
 
       {book.bookData && !book.loading && (
-        <ReaderView
-          book={book.bookData}
-          chapterIndex={book.chapterIndex}
-          setChapterIndex={book.setChapterIndex}
-          tokenisedHtml={tokenisedHtml}
-          wordIndex={wordIndex}
-          totalWords={totalWords}
-          fontSize={reader.fontSize}
-          fontFamily={reader.fontFamily}
-          onWordClick={handleWordClick}
-          chapterFinished={chapterFinished}
-          isLastChapter={isLastChapter}
-          onNextChapter={handleNextChapter}
-        />
+        <div className={`view-fade-in ${reader.focusMode ? "dim-others" : ""}`}>
+          <ReaderView
+            book={book.bookData}
+            chapterIndex={book.chapterIndex}
+            setChapterIndex={book.setChapterIndex}
+            tokenisedHtml={tokenisedHtml}
+            wordIndex={wordIndex}
+            totalWords={totalWords}
+            actualWpm={actualWpm}
+            fontSize={reader.fontSize}
+            fontFamily={reader.fontFamily}
+            onWordClick={handleWordClick}
+            chapterFinished={chapterFinished}
+            isLastChapter={isLastChapter}
+            onNextChapter={handleNextChapter}
+          />
+        </div>
       )}
     </div>
   );

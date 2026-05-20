@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { tokeniseChapter, getPauseMultiplier } from "../utils/tokeniser";
 
-export function useSpeedReader(chapter, wpm, isPlaying, onFinished) {
+export function useSpeedReader(chapter, wpm, isPlaying, onFinished, flowMode) {
   const [wordIndex, setWordIndex] = useState(0);
   const [tokenisedHtml, setTokenisedHtml] = useState("");
+  const [actualWpm, setActualWpm] = useState(0);
 
   const wordIndexRef = useRef(0);
   const wordsRef = useRef([]);
@@ -13,6 +14,10 @@ export function useSpeedReader(chapter, wpm, isPlaying, onFinished) {
   const currentSentenceRef = useRef(null);
   const rafScrollRef = useRef(null);
   const targetScrollRef = useRef(null);
+
+  // For Actual WPM tracking
+  const lastTickRef = useRef(null);
+  const samplesRef = useRef([]);
 
   useEffect(() => {
     onFinishedRef.current = onFinished;
@@ -31,7 +36,10 @@ export function useSpeedReader(chapter, wpm, isPlaying, onFinished) {
     wordIndexRef.current = 0;
     currentSentenceRef.current = null;
     setWordIndex(0);
+    setActualWpm(0);
+    samplesRef.current = [];
     stopSmoothScroll();
+    window.scrollTo(0, 0);
   }, [chapter]);
 
   function stopSmoothScroll() {
@@ -100,8 +108,8 @@ export function useSpeedReader(chapter, wpm, isPlaying, onFinished) {
     const bottomThreshold = viewHeight * 0.65;
     const topThreshold = 57 + viewHeight * 0.15;
 
-    if (rect.bottom > bottomThreshold || rect.top < topThreshold) {
-      const desiredTop = viewHeight * 0.4;
+    if (flowMode || rect.bottom > bottomThreshold || rect.top < topThreshold) {
+      const desiredTop = viewHeight * 0.45;
       const wordMidpoint = window.scrollY + rect.top + rect.height / 2;
       startSmoothScrollTo(wordMidpoint - desiredTop);
     }
@@ -114,6 +122,7 @@ export function useSpeedReader(chapter, wpm, isPlaying, onFinished) {
       timeoutRef.current = null;
     }
     stopSmoothScroll();
+    lastTickRef.current = null;
 
     if (!isPlaying || wordsRef.current.length === 0) return;
 
@@ -127,11 +136,29 @@ export function useSpeedReader(chapter, wpm, isPlaying, onFinished) {
         if (onFinishedRef.current) onFinishedRef.current();
         return;
       }
+
+      // Track actual speed
+      const now = performance.now();
+      if (lastTickRef.current) {
+        const delta = now - lastTickRef.current;
+        const currentInstantWpm = 60000 / delta;
+        samplesRef.current.push(currentInstantWpm);
+        if (samplesRef.current.length > 10) samplesRef.current.shift();
+        const avg =
+          samplesRef.current.reduce((a, b) => a + b, 0) /
+          samplesRef.current.length;
+        setActualWpm(Math.round(avg));
+      }
+      lastTickRef.current = now;
+
       const word = wordsRef.current[idx];
       applyHighlight(idx);
       if (idx % 10 === 0) setWordIndex(idx);
       wordIndexRef.current = idx + 1;
-      timeoutRef.current = setTimeout(tick, baseMs * getPauseMultiplier(word));
+      timeoutRef.current = setTimeout(
+        tick,
+        baseMs * getPauseMultiplier(word, wpm),
+      );
     }
 
     timeoutRef.current = setTimeout(tick, 0);
@@ -141,18 +168,26 @@ export function useSpeedReader(chapter, wpm, isPlaying, onFinished) {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       stopSmoothScroll();
     };
-  }, [isPlaying, wpm, chapter]);
+  }, [isPlaying, wpm, chapter, flowMode]);
 
-  const seek = useCallback((index) => {
-    wordIndexRef.current = index;
-    setWordIndex(index);
-    applyHighlight(index);
-  }, []);
+  const seek = useCallback(
+    (index) => {
+      wordIndexRef.current = index;
+      setWordIndex(index);
+      applyHighlight(index);
+      lastTickRef.current = null;
+      samplesRef.current = [];
+    },
+    [flowMode],
+  );
 
   const reset = useCallback(() => {
     wordIndexRef.current = 0;
     setWordIndex(0);
+    setActualWpm(0);
+    samplesRef.current = [];
     stopSmoothScroll();
+    window.scrollTo(0, 0);
     document
       .querySelectorAll(".word-active, .sentence-active")
       .forEach((el) => el.classList.remove("word-active", "sentence-active"));
@@ -163,6 +198,7 @@ export function useSpeedReader(chapter, wpm, isPlaying, onFinished) {
     tokenisedHtml,
     wordIndex,
     totalWords: wordsRef.current.length,
+    actualWpm,
     seek,
     reset,
   };

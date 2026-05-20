@@ -63,11 +63,36 @@ export function tokeniseChapter(rawHtml) {
   };
 }
 
-export function getPauseMultiplier(word) {
+export function getPauseMultiplier(word, wpm = 250) {
   if (!word) return 1;
+
+  const cleanWord = word.replace(/[.,!?;:()]/g, "");
+  const len = cleanWord.length;
+  
+  // ── Complexity Scoring ──
+  let score = 0;
+  
+  // Length-based complexity
+  if (len > 12) score += 5.0;
+  else if (len > 9) score += 4.0;
+  else if (len > 7) score += 2.5;
+  else if (len > 4) score += 1.5;
+
+  // Proper Nouns (Capitalized) - crucial for recognition "linger"
+  // Words like "Amazon" now get a very significant boost
+  if (/^[A-Z]/.test(cleanWord) && len > 1) {
+    score += 2.5;
+  }
+
+  // Punctuation complexity
   const last = word[word.length - 1];
-  if ([".", "!", "?"].includes(last)) return 2.5;
-  if ([",", ";", ":"].includes(last)) return 1.5;
-  if (word.length > 8) return 1.2;
-  return 1;
+  if ([".", "!", "?"].includes(last)) score += 4.0;
+  if ([",", ";", ":"].includes(last)) score += 2.0;
+
+  // ── Multiplier Calculation ──
+  // Dramatic scaling for high speeds
+  const wpmScale = Math.max(1, wpm / 200);
+  const finalMultiplier = 1 + (score * 0.75 * wpmScale);
+
+  return finalMultiplier;
 }

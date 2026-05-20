@@ -3,6 +3,7 @@ function MobileBottomBar({
   onPlayPause,
   wpm,
   setWpm,
+  actualWpm,
   chapterIndex,
   setChapterIndex,
   totalChapters,
@@ -56,32 +57,52 @@ function MobileBottomBar({
         ← Prev
       </button>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-        <button style={wpmBtn} onClick={decrease}>
-          −
-        </button>
-        <span
-          style={{
-            fontSize: "12px",
-            fontFamily: "Inter, sans-serif",
-            color: "var(--text-primary)",
-            minWidth: "60px",
-            textAlign: "center",
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
-          {wpm} WPM
-        </span>
-        <button style={wpmBtn} onClick={increase}>
-          +
-        </button>
+      <div style={{ position: "relative" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <button style={wpmBtn} onClick={decrease}>
+            −
+          </button>
+          <span
+            style={{
+              fontSize: "12px",
+              fontFamily: "Inter, sans-serif",
+              color: "var(--text-primary)",
+              minWidth: "60px",
+              textAlign: "center",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {wpm} WPM
+          </span>
+          <button style={wpmBtn} onClick={increase}>
+            +
+          </button>
+        </div>
+        {actualWpm > 0 && isPlaying && (
+          <div
+            style={{
+              position: "absolute",
+              top: "-18px",
+              left: 0,
+              right: 0,
+              textAlign: "center",
+              fontSize: "9px",
+              color: "var(--accent)",
+              fontWeight: "600",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+            }}
+          >
+            {actualWpm} effective
+          </div>
+        )}
       </div>
 
       <button
         onClick={onPlayPause}
         style={{
           background: isPlaying ? "var(--text-secondary)" : "var(--accent)",
-          color: "#fff",
+          color: isPlaying ? "#fff" : "var(--highlight-text)",
           border: "none",
           borderRadius: "8px",
           padding: "8px 16px",

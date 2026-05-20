@@ -169,7 +169,7 @@ function LibraryView({ onBookSelect }) {
             style={{
               display: "inline-block",
               background: "var(--accent)",
-              color: "#fff",
+              color: "var(--highlight-text)",
               padding: "8px 24px",
               borderRadius: "8px",
               fontSize: "13px",
@@ -391,7 +391,7 @@ function LibraryView({ onBookSelect }) {
                       style={{
                         flex: 1,
                         background: "var(--accent)",
-                        color: "#fff",
+                        color: "var(--highlight-text)",
                         borderRadius: "6px",
                         padding: "7px 0",
                         fontSize: "13px",
@@ -413,7 +413,7 @@ function LibraryView({ onBookSelect }) {
                           onClick={() => handleDelete(book.id)}
                           style={{
                             background: "#dc2626",
-                            color: "#fff",
+                            color: "var(--highlight-text)",
                             borderRadius: "6px",
                             padding: "7px 10px",
                             fontSize: "12px",

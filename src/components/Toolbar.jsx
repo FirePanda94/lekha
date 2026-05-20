@@ -55,6 +55,8 @@ function Toolbar({
         top: 0,
         zIndex: 100,
         background: "var(--bg-toolbar)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
         borderBottom: "1px solid var(--border)",
         padding: "10px 16px",
         display: "flex",
@@ -175,7 +177,7 @@ function Toolbar({
           onClick={onPlayPause}
           style={{
             background: isPlaying ? "var(--text-secondary)" : "var(--accent)",
-            color: "#fff",
+            color: isPlaying ? "#fff" : "var(--highlight-text)",
             borderRadius: "6px",
             padding: "6px 18px",
             fontSize: "13px",
@@ -242,11 +244,11 @@ function Toolbar({
                       fontFamily: "Inter, sans-serif",
                       color:
                         i === chapterIndex
-                          ? "var(--accent)"
+                          ? "var(--highlight-text)"
                           : "var(--text-primary)",
                       background:
                         i === chapterIndex
-                          ? "var(--accent-light)"
+                          ? "var(--accent)"
                           : "transparent",
                       cursor: "pointer",
                       lineHeight: 1.4,
@@ -263,25 +265,24 @@ function Toolbar({
 
       {/* Theme switcher — always visible */}
       <div style={{ display: "flex", gap: "6px" }}>
-        {["light", "dark", "sepia"].map((t) => (
+        {[
+          { id: "light", color: "#ffffff" },
+          { id: "nord", color: "#2e3440" },
+          { id: "oled", color: "#000000" },
+        ].map((t) => (
           <button
-            key={t}
-            onClick={() => setTheme(t)}
-            title={t}
+            key={t.id}
+            onClick={() => setTheme(t.id)}
+            title={t.id}
             style={{
               width: "22px",
               height: "22px",
               borderRadius: "50%",
               border:
-                theme === t
+                theme === t.id
                   ? "2px solid var(--accent)"
                   : "2px solid var(--border)",
-              background:
-                t === "light"
-                  ? "#ffffff"
-                  : t === "dark"
-                    ? "#1a1a1a"
-                    : "#f2e8d5",
+              background: t.color,
               cursor: "pointer",
               transition: "border-color 0.15s",
             }}

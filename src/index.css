@@ -9,46 +9,46 @@
 :root[data-theme="light"] {
   --bg-page: #f7f4ef;
   --bg-surface: #ffffff;
-  --bg-toolbar: #ffffff;
+  --bg-toolbar: rgba(255, 255, 255, 0.75);
   --text-primary: #1c1917;
   --text-secondary: #6b6560;
   --text-dim: #c8c4be;
   --accent: #c2410c;
   --accent-light: #fef3ec;
-  --border: #e7e3dc;
+  --border: rgba(231, 227, 220, 0.5);
   --highlight-bg: #c2410c;
   --highlight-text: #ffffff;
   --highlight-ctx: rgba(194, 65, 12, 0.1);
 }
 
-:root[data-theme="dark"] {
-  --bg-page: #131312;
-  --bg-surface: #1a2033;
-  --bg-toolbar: #1a2033;
-  --text-primary: #e8e3d9;
-  --text-secondary: #93c5fd;
-  --text-dim: #2a3f5f;
-  --accent: #1d4ed8;
-  --accent-light: #1e3a5f;
-  --border: #1e3a5f;
-  --highlight-bg: #1d4ed8;
-  --highlight-text: #ffffff;
-  --highlight-ctx: #1e3a5f;
+:root[data-theme="nord"] {
+  --bg-page: #2e3440;
+  --bg-surface: #3b4252;
+  --bg-toolbar: rgba(59, 66, 82, 0.75);
+  --text-primary: #eceff4;
+  --text-secondary: #d8dee9;
+  --text-dim: #4c566a;
+  --accent: #88c0d0;
+  --accent-light: #434c5e;
+  --border: rgba(67, 76, 94, 0.5);
+  --highlight-bg: #88c0d0;
+  --highlight-text: #2e3440;
+  --highlight-ctx: rgba(136, 192, 208, 0.15);
 }
 
-:root[data-theme="sepia"] {
-  --bg-page: #f2e8d5;
-  --bg-surface: #fbf5e8;
-  --bg-toolbar: #fbf5e8;
-  --text-primary: #3d2b1f;
-  --text-secondary: #8b6f5c;
-  --text-dim: #c4b09a;
-  --accent: #92400e;
-  --accent-light: #fdf3e3;
-  --border: #ddd0b8;
-  --highlight-bg: #78350f;
-  --highlight-text: #ffffff;
-  --highlight-ctx: rgba(120, 53, 15, 0.12);
+:root[data-theme="oled"] {
+  --bg-page: #000000;
+  --bg-surface: #111111;
+  --bg-toolbar: rgba(0, 0, 0, 0.85);
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-dim: #333333;
+  --accent: #ffffff;
+  --accent-light: #222222;
+  --border: rgba(255, 255, 255, 0.15);
+  --highlight-bg: #ffffff;
+  --highlight-text: #000000;
+  --highlight-ctx: rgba(255, 255, 255, 0.1);
 }
 
 html,
@@ -139,6 +139,17 @@ button {
   border-radius: 0 !important;
 }
 
+/* Sentence dimming */
+.dim-others [data-sentence-index] {
+  opacity: 0.35;
+  transition: opacity 0.3s ease;
+}
+
+.dim-others .sentence-active,
+.dim-others .word-active {
+  opacity: 1 !important;
+}
+
 /* Active word chip */
 [data-word-index] {
   border-radius: 3px;
@@ -148,10 +159,25 @@ button {
 .word-active {
   background-color: var(--highlight-bg) !important;
   color: var(--highlight-text) !important;
-  font-weight: 600;
-  font-size: 1.03em;
-  padding: 1px 5px;
-  border-radius: 4px !important;
+  box-shadow: 0 0 0 2px var(--highlight-bg);
+  border-radius: 2px !important;
+  text-shadow: 0.3px 0 0 currentColor, -0.3px 0 0 currentColor;
+}
+
+/* ── Micro-Animations ──────────────────────────────── */
+.view-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ── Mobile bottom bar ─────────────────────────────── */
@@ -204,6 +230,8 @@ button {
     right: 0;
     z-index: 150;
     background: var(--bg-toolbar);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-top: 1px solid var(--border);
     padding: 10px 16px;
     padding-bottom: max(10px, env(safe-area-inset-bottom));
