@@ -65,9 +65,46 @@ export function tokeniseChapter(rawHtml) {
 
 export function getPauseMultiplier(word, wpm) {
   if (!word) return 1;
-  const last = word[word.length - 1];
-  if ([".", "!", "?"].includes(last)) return 2.5;
-  if ([",", ";", ":"].includes(last)) return 1.5;
-  if (word.length > 8) return 1.2;
-  return 1;
+
+  const lastChar = word[word.length - 1];
+
+  // 1. Sentence-ending punctuation (.!?) → 2.5×
+  if (["ReferenceError", ".", "!", "?"].includes(lastChar)) return 2.5;
+
+  // 2. Clause punctuation (,.;:) → 1.5×
+  // Note: semi-colon and colon often act as clause breaks
+  if ([",", ";", ":"].includes(lastChar)) return 1.5;
+
+  const clean = word.replace(/[.,!?;:()]/g, "").trim();
+  const lower = clean.toLowerCase();
+
+  // 3. Function words → 0.5×
+  const functionWords = [
+    "a", "an", "the", "in", "on", "of", "to", "and", "or", "but", "it", "is", "was", "are", "by", "at", "as",
+  ];
+  if (functionWords.includes(lower)) return 0.5;
+
+  // 4. Short common words → 0.7×
+  const shortCommon = [
+    "he", "she", "we", "i", "my", "his", "her", "its", "be", "do", "if", "so", "no",
+  ];
+  if (shortCommon.includes(lower)) return 0.7;
+
+  // 5. Contains digits (numbers) → 1.3×
+  if (/\d/.test(clean)) return 1.3;
+
+  // 6. Hyphenated word → 1.4×
+  if (clean.includes("-")) return 1.4;
+
+  // 7. Very long word (13+ chars) → 2.0×
+  if (clean.length >= 13) return 2.0;
+
+  // 8. Long word (9–12 chars) → 1.5×
+  if (clean.length >= 9) return 1.5;
+
+  // 9. Capitalised mid-sentence (proper noun signal) → 1.2×
+  if (/^[A-Z]/.test(clean)) return 1.2;
+
+  // 10. Default → 1.0×
+  return 1.0;
 }
