@@ -5,6 +5,7 @@ import { useSpeedReader } from "./hooks/useSpeedReader";
 import Toolbar from "./components/Toolbar";
 import LibraryView from "./components/LibraryView";
 import ReaderView from "./components/ReaderView";
+import RSVPView from "./components/RSVPView";
 import MobileBottomBar from "./components/MobileBottomBar";
 
 function App() {
@@ -18,17 +19,25 @@ function App() {
     ? book.bookData.chapters[book.chapterIndex]
     : null;
 
-  const { tokenisedHtml, wordIndex, totalWords, actualWpm, reset, seek } =
-    useSpeedReader(
-      currentChapter,
-      reader.wpm,
-      isPlaying,
-      () => {
-        setIsPlaying(false);
-        setChapterFinished(true);
-      },
-      reader.flowMode,
-    );
+  const {
+    tokenisedHtml,
+    wordIndex,
+    words,
+    totalWords,
+    actualWpm,
+    reset,
+    seek,
+  } = useSpeedReader(
+    currentChapter,
+    reader.wpm,
+    isPlaying,
+    () => {
+      setIsPlaying(false);
+      setChapterFinished(true);
+    },
+    reader.flowMode,
+    reader.readingMode,
+  );
 
   useEffect(() => {
     if (!tokenisedHtml || !book.restoredProgress) return;
@@ -80,16 +89,22 @@ function App() {
         setIsPlaying((p) => !p);
         if (chapterFinished) setChapterFinished(false);
       }
-      if (e.code === "ArrowLeft" && book.chapterIndex > 0) {
-        book.setChapterIndex((i) => i - 1);
+      if (e.code === "ArrowLeft") {
+        if (reader.readingMode === "rsvp") {
+          seek(Math.max(0, wordIndex - 5));
+        } else if (book.chapterIndex > 0) {
+          book.setChapterIndex((i) => i - 1);
+        }
       }
-      if (e.code === "ArrowRight" &&
-        book.chapterIndex < book.bookData.chapters.length - 1
-      ) {
-        book.setChapterIndex((i) => i + 1);
+      if (e.code === "ArrowRight") {
+        if (reader.readingMode === "rsvp") {
+          seek(Math.min(totalWords - 1, wordIndex + 5));
+        } else if (book.chapterIndex < book.bookData.chapters.length - 1) {
+          book.setChapterIndex((i) => i + 1);
+        }
       }
       if (e.code === "Equal" || e.code === "NumpadAdd") {
-        reader.setWpm((w) => Math.min(600, w + 10));
+        reader.setWpm((w) => Math.min(1000, w + 10));
       }
       if (e.code === "Minus" || e.code === "NumpadSubtract") {
         reader.setWpm((w) => Math.max(60, w - 10));
@@ -97,7 +112,14 @@ function App() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [book.bookData, book.chapterIndex, chapterFinished]);
+  }, [
+    book.bookData,
+    book.chapterIndex,
+    chapterFinished,
+    reader.readingMode,
+    wordIndex,
+    totalWords,
+  ]);
 
   function handleBackToLibrary() {
     setIsPlaying(false);
@@ -134,6 +156,8 @@ function App() {
           reader.setFontFamily((f) => (f === "serif" ? "sans" : "serif"))
         }
         onBackToLibrary={handleBackToLibrary}
+        readingMode={reader.readingMode}
+        setReadingMode={reader.setReadingMode}
       />
 
       {/* Mobile bottom bar */}
@@ -174,21 +198,38 @@ function App() {
 
       {book.bookData && !book.loading && (
         <div className={`view-fade-in ${reader.focusMode ? "dim-others" : ""}`}>
-          <ReaderView
-            book={book.bookData}
-            chapterIndex={book.chapterIndex}
-            setChapterIndex={book.setChapterIndex}
-            tokenisedHtml={tokenisedHtml}
-            wordIndex={wordIndex}
-            totalWords={totalWords}
-            actualWpm={actualWpm}
-            fontSize={reader.fontSize}
-            fontFamily={reader.fontFamily}
-            onWordClick={handleWordClick}
-            chapterFinished={chapterFinished}
-            isLastChapter={isLastChapter}
-            onNextChapter={handleNextChapter}
-          />
+          {reader.readingMode === "flow" ? (
+            <ReaderView
+              book={book.bookData}
+              chapterIndex={book.chapterIndex}
+              setChapterIndex={book.setChapterIndex}
+              tokenisedHtml={tokenisedHtml}
+              wordIndex={wordIndex}
+              totalWords={totalWords}
+              actualWpm={actualWpm}
+              fontSize={reader.fontSize}
+              fontFamily={reader.fontFamily}
+              onWordClick={handleWordClick}
+              chapterFinished={chapterFinished}
+              isLastChapter={isLastChapter}
+              onNextChapter={handleNextChapter}
+            />
+          ) : (
+            <RSVPView
+              words={words}
+              wordIndex={wordIndex}
+              totalWords={totalWords}
+              isPlaying={isPlaying}
+              onPlayPause={() => setIsPlaying((p) => !p)}
+              wpm={reader.wpm}
+              setWpm={reader.setWpm}
+              actualWpm={actualWpm}
+              chapterTitle={currentChapter?.label}
+              chapterIndex={book.chapterIndex}
+              onClose={() => reader.setReadingMode("flow")}
+              onSeek={seek}
+            />
+          )}
         </div>
       )}
     </div>

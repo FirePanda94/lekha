@@ -17,8 +17,11 @@ function Toolbar({
   onBackToLibrary,
   fontFamily,
   onToggleFontFamily,
+  readingMode,
+  setReadingMode,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const iconBtnStyle = {
     height: "30px",
@@ -65,72 +68,119 @@ function Toolbar({
         flexWrap: "wrap",
       }}
     >
-      {/* App name */}
+      {/* App name / Home link */}
       <span
+        onClick={onBackToLibrary}
+        className="brand-logo"
         style={{
           fontFamily: "Lora, Georgia, serif",
-          fontWeight: "500",
-          fontSize: "18px",
+          fontWeight: "600",
+          fontSize: "19px",
           color: "var(--text-primary)",
-          letterSpacing: "-0.01em",
+          letterSpacing: "-0.015em",
           marginRight: "auto",
+          cursor: "pointer",
+          transition: "opacity 0.2s",
+          padding: "4px 0",
         }}
       >
         Lekha
       </span>
 
-      {/* Back to library — hidden on mobile */}
-      {hasBook && (
-        <button
-          className="toolbar-mobile-hide"
-          onClick={onBackToLibrary}
-          style={{ ...iconBtnStyle, color: "var(--text-secondary)" }}
-          title="Back to library"
-        >
-          ← Library
-        </button>
-      )}
-
       {hasBook && divider}
 
-      {/* Font family toggle — hidden on mobile */}
+      {/* Settings & Font Controls */}
       {hasBook && (
-        <button
-          className="toolbar-mobile-hide"
-          onClick={onToggleFontFamily}
-          title={
-            fontFamily === "serif" ? "Switch to sans-serif" : "Switch to serif"
-          }
-          style={{
-            ...iconBtnStyle,
-            fontFamily:
-              fontFamily === "serif"
-                ? "Lora, Georgia, serif"
-                : "Inter, sans-serif",
-          }}
-        >
-          {fontFamily === "serif" ? "Serif" : "Sans"}
-        </button>
-      )}
+        <>
+          {/* Desktop/Tablet: Direct font controls */}
+          <div
+            className="toolbar-mobile-hide"
+            style={{ display: "flex", alignItems: "center", gap: "10px" }}
+          >
+            <button
+              onClick={onToggleFontFamily}
+              title={
+                fontFamily === "serif" ? "Switch to sans-serif" : "Switch to serif"
+              }
+              style={{
+                ...iconBtnStyle,
+                fontFamily:
+                  fontFamily === "serif"
+                    ? "Lora, Georgia, serif"
+                    : "Inter, sans-serif",
+              }}
+            >
+              {fontFamily === "serif" ? "Serif" : "Sans"}
+            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <button
+                style={{ ...iconBtnStyle, fontSize: "13px" }}
+                onClick={onDecreaseFontSize}
+                title="Decrease font size"
+              >
+                A−
+              </button>
+              <button
+                style={{ ...iconBtnStyle, fontSize: "15px" }}
+                onClick={onIncreaseFontSize}
+                title="Increase font size"
+              >
+                A+
+              </button>
+            </div>
+          </div>
 
-      {/* Font size — visible on all screens */}
-      {hasBook && (
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <button
-            style={{ ...iconBtnStyle, fontSize: "13px" }}
-            onClick={onDecreaseFontSize}
-            title="Decrease font size"
-          >
-            A−
-          </button>
-          <button
-            style={{ ...iconBtnStyle, fontSize: "15px" }}
-            onClick={onIncreaseFontSize}
-            title="Increase font size"
-          >
-            A+
-          </button>
-        </div>
+          {/* Mobile: Consolidated Settings */}
+          <div className="toolbar-mobile-only" style={{ position: "relative" }}>
+            <button
+              onClick={() => setSettingsOpen(!settingsOpen)}
+              style={{
+                ...iconBtnStyle,
+                color: settingsOpen ? "var(--accent)" : "var(--text-secondary)",
+              }}
+            >
+              ⚙️
+            </button>
+            {settingsOpen && (
+              <>
+                <div
+                  onClick={() => setSettingsOpen(false)}
+                  style={{ position: "fixed", inset: 0, zIndex: 199 }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 8px)",
+                    right: "-10px",
+                    width: "200px",
+                    background: "var(--bg-surface)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "10px",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                    zIndex: 200,
+                    padding: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                >
+                  <div style={{ fontSize: "11px", color: "var(--text-secondary)", fontWeight: "600", textTransform: "uppercase" }}>Typeface</div>
+                  <button
+                    onClick={() => { onToggleFontFamily(); setSettingsOpen(false); }}
+                    style={{ ...iconBtnStyle, width: "100%", justifyContent: "center", padding: "8px 12px", height: "auto" }}
+                  >
+                    {fontFamily === "serif" ? "Switch to Sans" : "Switch to Serif"}
+                  </button>
+                  <div style={{ fontSize: "11px", color: "var(--text-secondary)", fontWeight: "600", textTransform: "uppercase" }}>Font Size</div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button style={{ ...iconBtnStyle, flex: 1, height: "36px" }} onClick={onDecreaseFontSize}>A−</button>
+                    <button style={{ ...iconBtnStyle, flex: 1, height: "36px" }} onClick={onIncreaseFontSize}>A+</button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </>
       )}
 
       {hasBook && divider}
@@ -172,25 +222,40 @@ function Toolbar({
 
       {/* Play/Pause — hidden on mobile (lives in bottom bar) */}
       {hasBook && (
-        <button
-          className="toolbar-mobile-hide"
-          onClick={onPlayPause}
-          style={{
-            background: isPlaying ? "var(--text-secondary)" : "var(--accent)",
-            color: isPlaying ? "#fff" : "var(--highlight-text)",
-            borderRadius: "6px",
-            padding: "6px 18px",
-            fontSize: "13px",
-            fontFamily: "Inter, sans-serif",
-            height: "30px",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            transition: "background 0.2s",
-          }}
-        >
-          {isPlaying ? "⏸ Pause" : "▶ Play"}
-        </button>
+        <div style={{ display: "flex", gap: "6px" }}>
+          <button
+            className="toolbar-mobile-hide"
+            onClick={onPlayPause}
+            style={{
+              background: isPlaying ? "var(--text-secondary)" : "var(--accent)",
+              color: isPlaying ? "#fff" : "var(--highlight-text)",
+              borderRadius: "6px",
+              padding: "6px 18px",
+              fontSize: "13px",
+              fontFamily: "Inter, sans-serif",
+              height: "30px",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              transition: "background 0.2s",
+            }}
+          >
+            {isPlaying ? "⏸ Pause" : "▶ Play"}
+          </button>
+          <button
+            onClick={() => setReadingMode(readingMode === "rsvp" ? "flow" : "rsvp")}
+            style={{
+              ...iconBtnStyle,
+              background: readingMode === "rsvp" ? "var(--accent-light)" : "var(--bg-surface)",
+              color: readingMode === "rsvp" ? "var(--accent)" : "var(--text-secondary)",
+              borderColor: readingMode === "rsvp" ? "var(--accent)" : "var(--border)",
+              fontWeight: readingMode === "rsvp" ? "600" : "400",
+            }}
+            title="Toggle RSVP Mode"
+          >
+            ⚡ RSVP
+          </button>
+        </div>
       )}
 
       {hasBook && divider}

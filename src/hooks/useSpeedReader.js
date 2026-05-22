@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { tokeniseChapter, getPauseMultiplier } from "../utils/tokeniser";
 
-export function useSpeedReader(chapter, wpm, isPlaying, onFinished, flowMode) {
+export function useSpeedReader(chapter, wpm, isPlaying, onFinished, flowMode, mode = "flow") {
   const [wordIndex, setWordIndex] = useState(0);
   const [tokenisedHtml, setTokenisedHtml] = useState("");
   const [actualWpm, setActualWpm] = useState(0);
@@ -18,6 +18,8 @@ export function useSpeedReader(chapter, wpm, isPlaying, onFinished, flowMode) {
   // For Actual WPM tracking
   const lastTickRef = useRef(null);
   const samplesRef = useRef([]);
+
+  const isRsvp = mode === "rsvp";
 
   useEffect(() => {
     onFinishedRef.current = onFinished;
@@ -39,8 +41,8 @@ export function useSpeedReader(chapter, wpm, isPlaying, onFinished, flowMode) {
     setActualWpm(0);
     samplesRef.current = [];
     stopSmoothScroll();
-    window.scrollTo(0, 0);
-  }, [chapter]);
+    if (!isRsvp) window.scrollTo(0, 0);
+  }, [chapter, isRsvp]);
 
   function stopSmoothScroll() {
     if (rafScrollRef.current) {
@@ -94,6 +96,8 @@ export function useSpeedReader(chapter, wpm, isPlaying, onFinished, flowMode) {
   }
 
   function applyHighlight(index) {
+    if (isRsvp) return; // Don't highlight/scroll in RSVP mode
+
     const prev = document.querySelector(".word-active");
     if (prev) prev.classList.remove("word-active");
 
@@ -153,7 +157,9 @@ export function useSpeedReader(chapter, wpm, isPlaying, onFinished, flowMode) {
 
       const word = wordsRef.current[idx];
       applyHighlight(idx);
-      if (idx % 10 === 0) setWordIndex(idx);
+
+      if (isRsvp || idx % 10 === 0) setWordIndex(idx);
+
       wordIndexRef.current = idx + 1;
       timeoutRef.current = setTimeout(
         tick,
@@ -168,7 +174,7 @@ export function useSpeedReader(chapter, wpm, isPlaying, onFinished, flowMode) {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       stopSmoothScroll();
     };
-  }, [isPlaying, wpm, chapter, flowMode]);
+  }, [isPlaying, wpm, chapter, flowMode, isRsvp]);
 
   const seek = useCallback(
     (index) => {
@@ -178,7 +184,7 @@ export function useSpeedReader(chapter, wpm, isPlaying, onFinished, flowMode) {
       lastTickRef.current = null;
       samplesRef.current = [];
     },
-    [flowMode],
+    [flowMode, isRsvp],
   );
 
   const reset = useCallback(() => {
@@ -187,16 +193,17 @@ export function useSpeedReader(chapter, wpm, isPlaying, onFinished, flowMode) {
     setActualWpm(0);
     samplesRef.current = [];
     stopSmoothScroll();
-    window.scrollTo(0, 0);
+    if (!isRsvp) window.scrollTo(0, 0);
     document
       .querySelectorAll(".word-active, .sentence-active")
       .forEach((el) => el.classList.remove("word-active", "sentence-active"));
     currentSentenceRef.current = null;
-  }, []);
+  }, [isRsvp]);
 
   return {
     tokenisedHtml,
     wordIndex,
+    words: wordsRef.current,
     totalWords: wordsRef.current.length,
     actualWpm,
     seek,

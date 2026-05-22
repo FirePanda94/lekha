@@ -8,10 +8,11 @@ export function useReader() {
   const [wpm, setWpm] = useState(saved?.wpm || 250);
   const [fontSize, setFontSize] = useState(saved?.fontSize || 19);
   const [fontFamily, setFontFamily] = useState(saved?.fontFamily || "serif");
+  const [readingMode, setReadingMode] = useState(saved?.readingMode || "flow");
 
   useEffect(() => {
-    saveSettings({ theme, wpm, fontSize, fontFamily });
-  }, [theme, wpm, fontSize, fontFamily]);
+    saveSettings({ theme, wpm, fontSize, fontFamily, readingMode });
+  }, [theme, wpm, fontSize, fontFamily, readingMode]);
 
   function increaseFontSize() {
     setFontSize((s) => Math.min(32, s + 1));
@@ -30,6 +31,8 @@ export function useReader() {
     decreaseFontSize,
     fontFamily,
     setFontFamily,
+    readingMode,
+    setReadingMode,
     focusMode: true,
     flowMode: true,
   };

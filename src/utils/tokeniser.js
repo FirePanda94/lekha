@@ -23,31 +23,40 @@ export function tokeniseChapter(rawHtml) {
 
       tokens.forEach((token) => {
         if (token.trim().length === 0) {
-          // Wrap spaces in a span with the CURRENT sentence index
-          // so they belong to the same sentence as the word before them
           const spaceSpan = document.createElement("span");
           spaceSpan.setAttribute("data-sentence-index", sentenceIndex);
           spaceSpan.setAttribute("data-space", "true");
           spaceSpan.textContent = token;
           fragment.appendChild(spaceSpan);
         } else {
-          // Increment sentence index at the START of the next word
-          // so the space after a sentence-ending word stays with that sentence
-          if (pendingIncrement) {
-            sentenceIndex++;
-            pendingIncrement = false;
-          }
+          // Split on hyphens/em-dashes and treat each part as a separate word
+          const subTokens = token.split(/[-—]/);
+          
+          subTokens.forEach((sub, i) => {
+            if (sub === "" && i > 0 && i < subTokens.length - 1) return; // Skip empty bits from double hyphens/dashes
+            
+            if (pendingIncrement) {
+              sentenceIndex++;
+              pendingIncrement = false;
+            }
 
-          const span = document.createElement("span");
-          span.setAttribute("data-word-index", wordIndex);
-          span.setAttribute("data-sentence-index", sentenceIndex);
-          span.textContent = token;
-          fragment.appendChild(span);
-          wordIndex++;
+            const span = document.createElement("span");
+            span.setAttribute("data-word-index", wordIndex);
+            span.setAttribute("data-sentence-index", sentenceIndex);
+            span.textContent = sub;
+            fragment.appendChild(span);
+            wordIndex++;
 
-          if (/[.!?]['"]?\s*$/.test(token)) {
-            pendingIncrement = true;
-          }
+            // If it's not the last part of a hyphenated word, we don't check for sentence ends
+            // but we might want a hyphen visual? The user said "treated as separate words".
+            // Let's just treat them as words. 
+            
+            if (i === subTokens.length - 1) {
+               if (/[.!?]['"]?\s*$/.test(sub)) {
+                pendingIncrement = true;
+              }
+            }
+          });
         }
       });
 
@@ -93,18 +102,15 @@ export function getPauseMultiplier(word, wpm) {
   // 5. Contains digits (numbers) → 1.3×
   if (/\d/.test(clean)) return 1.3;
 
-  // 6. Hyphenated word → 1.4×
-  if (clean.includes("-")) return 1.4;
-
-  // 7. Very long word (13+ chars) → 2.0×
+  // 6. Very long word (13+ chars) → 2.0×
   if (clean.length >= 13) return 2.0;
 
-  // 8. Long word (9–12 chars) → 1.5×
+  // 7. Long word (9–12 chars) → 1.5×
   if (clean.length >= 9) return 1.5;
 
-  // 9. Capitalised mid-sentence (proper noun signal) → 1.2×
+  // 8. Capitalised mid-sentence (proper noun signal) → 1.2×
   if (/^[A-Z]/.test(clean)) return 1.2;
 
-  // 10. Default → 1.0×
+  // 9. Default → 1.0×
   return 1.0;
 }
